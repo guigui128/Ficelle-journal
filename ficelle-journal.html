@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#1D3557" />
+  <title>Journal · Ficelle Conseil</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Georgia', 'Palatino', serif; background: #F4F1EC; min-height: 100vh; }
+    button { font-family: 'Georgia', 'Palatino', serif; }
+    input, textarea { font-family: 'Georgia', 'Palatino', serif; }
+
+    @keyframes ripple {
+      0% { transform: scale(1); opacity: 0.6; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(192,57,43,0.2); }
+      50% { box-shadow: 0 0 0 8px rgba(192,57,43,0.1); }
+    }
+
+    #root { padding-bottom: 40px; }
+
+    .header {
+      background: #1D3557;
+      padding: 22px 20px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .header-inner { max-width: 600px; margin: 0 auto; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .header-label { color: #A8DADC; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: sans-serif; }
+    .header-title { color: #fff; font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em; margin-top: 2px; }
+    .header-count { color: #A8DADC; font-size: 0.8rem; font-family: sans-serif; text-align: right; }
+    .header-count-num { font-size: 1.4rem; font-weight: 700; color: #fff; line-height: 1; }
+
+    .tabs { display: flex; gap: 4px; margin-top: 14px; }
+    .tab-btn {
+      padding: 7px 12px; border-radius: 20px; border: none;
+      font-weight: 700; font-size: 0.78rem; cursor: pointer;
+      font-family: sans-serif; transition: all 0.2s;
+    }
+    .tab-btn.active { background: #A8DADC; color: #1D3557; }
+    .tab-btn.inactive { background: rgba(255,255,255,0.1); color: #A8DADC; }
+
+    .content { max-width: 600px; margin: 0 auto; padding: 20px 16px 0; }
+
+    .badge {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+      padding: 2px 9px; border-radius: 20px; text-transform: uppercase; white-space: nowrap;
+    }
+
+    .entry-card {
+      border-radius: 0 10px 10px 0;
+      background: #fff;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      position: relative;
+    }
+    .entry-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .entry-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .entry-client { font-size: 0.72rem; color: #555; font-style: italic; }
+    .entry-date { font-size: 0.72rem; color: #999; white-space: nowrap; }
+    .entry-text { margin: 10px 0 6px; font-size: 0.93rem; color: #222; line-height: 1.6; white-space: pre-wrap; }
+    .entry-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .entry-tag { font-size: 0.7rem; background: #F0F0F0; color: #666; padding: 2px 8px; border-radius: 12px; }
+    .entry-delete {
+      position: absolute; bottom: 10px; right: 14px;
+      background: none; border: none; cursor: pointer; font-size: 0.72rem;
+      transition: color 0.2s;
+    }
+
+    .day-header {
+      font-size: 0.75rem; font-weight: 700; color: #888;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 8px; font-family: sans-serif;
+      border-bottom: 1px solid #ddd; padding-bottom: 5px;
+    }
+
+    .add-form-wrap { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border: 2px solid #1D3557; }
+    .cat-btns { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .cat-btn { padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.78rem; cursor: pointer; font-family: sans-serif; transition: all 0.15s; }
+    .text-row { display: flex; gap: 8px; align-items: flex-start; }
+    .main-textarea { flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.9rem; font-family: inherit; resize: vertical; width: 100%; }
+    .tag-input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; margin-top: 8px; font-family: inherit; }
+    .client-input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.88rem; margin-bottom: 10px; font-family: inherit; }
+    .form-actions { display: flex; gap: 10px; margin-top: 12px; }
+    .btn-save { flex: 1; padding: 10px; background: #2D6A4F; color: #fff; border: none; border-radius: 8px; font-size: 0.92rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-cancel { padding: 10px 18px; background: #f5f5f5; color: #666; border: none; border-radius: 8px; font-size: 0.88rem; cursor: pointer; font-family: inherit; }
+
+    .add-btns-row { display: flex; gap: 10px; margin-bottom: 20px; }
+    .btn-new-entry { flex: 1; padding: 13px; background: #1D3557; color: #fff; border: none; border-radius: 10px; font-size: 0.95rem; cursor: pointer; font-family: inherit; font-weight: 600; letter-spacing: 0.03em; box-shadow: 0 4px 14px rgba(29,53,87,0.25); }
+
+    .mic-btn { border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+
+    .filter-row { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-btn { padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.78rem; cursor: pointer; font-family: sans-serif; }
+    .search-input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 2px solid #ddd; font-size: 0.9rem; font-family: sans-serif; margin-bottom: 16px; background: #fff; }
+
+    .empty-state { text-align: center; color: #aaa; padding: 40px 0; font-family: sans-serif; }
+
+    /* Dashboard */
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+    .kpi-card { border-radius: 12px; padding: 14px 12px; text-align: center; }
+    .kpi-num { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .kpi-label { font-size: 0.72rem; font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .dash-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .dash-card-title { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
+    .bar-chart { display: flex; gap: 8px; align-items: flex-end; height: 60px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .bar { width: 100%; background: #1D3557; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.4s; }
+    .bar-label { font-size: 0.65rem; color: #aaa; white-space: nowrap; font-family: sans-serif; }
+    .client-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .client-name { font-size: 0.88rem; color: #333; }
+    .client-bar-wrap { display: flex; align-items: center; gap: 6px; }
+    .client-bar { height: 6px; background: #2D6A4F; border-radius: 3px; }
+    .client-count { font-size: 0.75rem; color: #2D6A4F; font-weight: 700; }
+    .tags-cloud { display: flex; flex-wrap: wrap; gap: 7px; }
+    .tag-chip { background: #F0F4FF; color: #1D3557; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+
+    /* Drive mode */
+    .drive-wrap { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 16px; gap: 24px; }
+    .drive-cat-btns { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 360px; }
+    .drive-cat-btn { padding: 22px 20px; border-radius: 16px; font-size: 1.1rem; font-weight: 800; cursor: pointer; font-family: sans-serif; box-shadow: 0 4px 14px rgba(0,0,0,0.08); transition: transform 0.1s; }
+    .drive-cat-btn:active { transform: scale(0.97); }
+    .drive-mic-wrap { position: relative; width: 180px; height: 180px; }
+    .ripple { position: absolute; inset: 0; border-radius: 50%; }
+    .drive-stop-btn { position: absolute; inset: 0; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; }
+    .drive-transcript { margin-top: 16px; padding: 12px 16px; background: #fff; border-radius: 12px; font-size: 0.9rem; color: #333; line-height: 1.6; max-width: 320px; text-align: left; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-style: italic; }
+    .drive-preview-text { background: #fff; border-radius: 14px; padding: 16px 18px; font-size: 0.95rem; color: #222; line-height: 1.7; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-bottom: 20px; min-height: 80px; }
+    .drive-actions { display: flex; flex-direction: column; gap: 12px; }
+    .btn-drive-save { padding: 18px; background: #2D6A4F; color: #fff; border: none; border-radius: 14px; font-size: 1.1rem; font-weight: 800; cursor: pointer; font-family: sans-serif; box-shadow: 0 4px 14px rgba(45,106,79,0.35); }
+    .btn-drive-redo { padding: 14px; background: #fff; color: #1D3557; border: 2px solid #1D3557; border-radius: 14px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: sans-serif; }
+    .btn-drive-cancel { padding: 12px; background: none; color: #aaa; border: none; font-size: 0.85rem; cursor: pointer; font-family: sans-serif; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+const STORAGE_KEY = "ficelle-journal-entries";
+
+const CATEGORIES = [
+  { id: "client",    label: "Actions clients",  color: "#2D6A4F", bg: "#D8F3DC" },
+  { id: "ficelle",   label: "Ficelle Conseil",   color: "#1D3557", bg: "#A8DADC" },
+  { id: "reflexion", label: "Réflexions perso",  color: "#7B2D8B", bg: "#E9D8F4" },
+];
+const getCat = (id) => CATEGORIES.find(c => c.id === id) || CATEGORIES[0];
+
+const formatDate = (iso) => new Date(iso).toLocaleDateString("fr-FR", {
+  weekday:"short", day:"numeric", month:"short", year:"numeric"
+});
+
+// --- Storage (localStorage) ---
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+  catch { return []; }
+}
+function saveEntries(entries) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
+  catch(e) { console.error("Storage error", e); }
+}
+
+// --- Badge ---
+function Badge({ catId }) {
+  const cat = getCat(catId);
+  return (
+    <span className="badge" style={{ background: cat.bg, color: cat.color }}>
+      {cat.label}
+    </span>
+  );
+}
+
+// --- Entry Card ---
+function EntryCard({ entry, onDelete }) {
+  const [confirm, setConfirm] = useState(false);
+  const cat = getCat(entry.category);
+  return (
+    <div className="entry-card" style={{ borderLeft: `4px solid ${cat.color}` }}>
+      <div className="entry-top">
+        <div className="entry-meta">
+          <Badge catId={entry.category} />
+          {entry.client && <span className="entry-client">— {entry.client}</span>}
+        </div>
+        <span className="entry-date">{formatDate(entry.date)}</span>
+      </div>
+      <p className="entry-text">{entry.text}</p>
+      {entry.tags && entry.tags.length > 0 && (
+        <div className="entry-tags">
+          {entry.tags.map(t => <span key={t} className="entry-tag">#{t}</span>)}
+        </div>
+      )}
+      <button
+        className="entry-delete"
+        style={{ color: confirm ? "#c0392b" : "#ccc" }}
+        onClick={() => confirm ? onDelete(entry.id) : setConfirm(true)}
+        onBlur={() => setConfirm(false)}
+      >
+        {confirm ? "Confirmer ?" : "✕"}
+      </button>
+    </div>
+  );
+}
+
+// --- Mic Button ---
+function MicButton({ onTranscript, small }) {
+  const [listening, setListening] = useState(false);
+  const recRef = useRef(null);
+  const supported = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+  useEffect(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = "fr-FR"; rec.continuous = false; rec.interimResults = false;
+    rec.onresult = (e) => onTranscript(Array.from(e.results).map(r => r[0].transcript).join(" "));
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    recRef.current = rec;
+  }, []);
+
+  if (!supported) return null;
+  const sz = small ? 38 : 48;
+  return (
+    <button
+      className="mic-btn"
+      onClick={() => {
+        if (listening) { recRef.current?.stop(); setListening(false); }
+        else { recRef.current?.start(); setListening(true); }
+      }}
+      style={{
+        width: sz, height: sz,
+        border: `2px solid ${listening ? "#c0392b" : "#1D3557"}`,
+        background: listening ? "#c0392b" : "#fff",
+        color: listening ? "#fff" : "#1D3557",
+        fontSize: small ? "1.1rem" : "1.3rem",
+        animation: listening ? "pulse 1s infinite" : "none",
+      }}
+    >
+      {listening ? "⏹" : "🎙️"}
+    </button>
+  );
+}
+
+// --- Add Form ---
+function AddForm({ onAdd }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [category, setCategory] = useState("client");
+  const [client, setClient] = useState("");
+  const [tagInput, setTagInput] = useState("");
+
+  const handleSubmit = () => {
+    if (!text.trim()) return;
+    const tags = tagInput.split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
+    onAdd({ text: text.trim(), category, client: client.trim(), tags, date: new Date().toISOString(), id: Date.now().toString() });
+    setText(""); setClient(""); setTagInput(""); setOpen(false);
+  };
+
+  if (!open) return (
+    <div className="add-btns-row">
+      <button className="btn-new-entry" onClick={() => setOpen(true)}>+ Nouvelle entrée</button>
+      <MicButton onTranscript={(t) => { setText(t); setOpen(true); }} />
+    </div>
+  );
+
+  return (
+    <div className="add-form-wrap">
+      <div className="cat-btns">
+        {CATEGORIES.map(cat => (
+          <button key={cat.id} className="cat-btn"
+            onClick={() => setCategory(cat.id)}
+            style={{
+              border: `2px solid ${cat.color}`,
+              background: category === cat.id ? cat.color : "transparent",
+              color: category === cat.id ? "#fff" : cat.color,
+            }}>
+            {cat.label}
+          </button>
+        ))}
+      </div>
+      {category === "client" && (
+        <input className="client-input" placeholder="Nom du client / projet (optionnel)"
+          value={client} onChange={e => setClient(e.target.value)} />
+      )}
+      <div className="text-row">
+        <textarea className="main-textarea"
+          placeholder="Décris tes actions, réflexions, avancées... ou dicte avec le micro 🎙️"
+          rows={4} value={text} onChange={e => setText(e.target.value)} />
+        <MicButton onTranscript={(t) => setText(prev => prev ? prev + " " + t : t)} small />
+      </div>
+      <input className="tag-input" placeholder="Tags (ex: prospection, rdv, stratégie)"
+        value={tagInput} onChange={e => setTagInput(e.target.value)} />
+      <div className="form-actions">
+        <button className="btn-save" onClick={handleSubmit}>Enregistrer</button>
+        <button className="btn-cancel" onClick={() => setOpen(false)}>Annuler</button>
+      </div>
+    </div>
+  );
+}
+
+// --- Dashboard ---
+function Dashboard({ entries }) {
+  const byCat = CATEGORIES.map(cat => ({ ...cat, count: entries.filter(e => e.category === cat.id).length }));
+
+  const weeks = [];
+  const now = new Date();
+  for (let i = 3; i >= 0; i--) {
+    const s = new Date(now); s.setDate(now.getDate() - (i+1)*7);
+    const e2 = new Date(now); e2.setDate(now.getDate() - i*7);
+    weeks.push({ label: i === 0 ? "Cette sem." : `S-${i}`, count: entries.filter(e => { const d = new Date(e.date); return d >= s && d < e2; }).length });
+  }
+  const maxWeek = Math.max(...weeks.map(w => w.count), 1);
+
+  const clients = {};
+  entries.filter(e => e.category === "client" && e.client).forEach(e => { clients[e.client] = (clients[e.client]||0)+1; });
+  const topClients = Object.entries(clients).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+  const tags = {};
+  entries.forEach(e => (e.tags||[]).forEach(t => { tags[t] = (tags[t]||0)+1; }));
+  const topTags = Object.entries(tags).sort((a,b) => b[1]-a[1]).slice(0,8);
+
+  return (
+    <div>
+      <div className="kpi-grid">
+        {byCat.map(cat => (
+          <div key={cat.id} className="kpi-card" style={{ background: cat.bg, border: `2px solid ${cat.color}20` }}>
+            <div className="kpi-num" style={{ color: cat.color }}>{cat.count}</div>
+            <div className="kpi-label" style={{ color: cat.color }}>{cat.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="dash-card">
+        <div className="dash-card-title">Activité hebdomadaire</div>
+        <div className="bar-chart">
+          {weeks.map(w => (
+            <div key={w.label} className="bar-col">
+              <div className="bar" style={{ height: `${(w.count/maxWeek)*48+4}px`, opacity: w.count===0?0.15:1 }} />
+              <span className="bar-label">{w.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {topClients.length > 0 && (
+        <div className="dash-card">
+          <div className="dash-card-title">Clients actifs</div>
+          {topClients.map(([name, count]) => (
+            <div key={name} className="client-row">
+              <span className="client-name">{name}</span>
+              <div className="client-bar-wrap">
+                <div className="client-bar" style={{ width: `${(count/topClients[0][1])*80}px` }} />
+                <span className="client-count">{count}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {topTags.length > 0 && (
+        <div className="dash-card">
+          <div className="dash-card-title">Sujets fréquents</div>
+          <div className="tags-cloud">
+            {topTags.map(([tag, count]) => (
+              <span key={tag} className="tag-chip">#{tag} <span style={{opacity:0.6,fontWeight:400}}>×{count}</span></span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Drive Mode ---
+function DriveMode({ onAdd }) {
+  const [phase, setPhase] = useState("idle");
+  const [category, setCategory] = useState(null);
+  const [transcript, setTranscript] = useState("");
+  const recRef = useRef(null);
+
+  useEffect(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = "fr-FR"; rec.continuous = true; rec.interimResults = true;
+    rec.onresult = (e) => setTranscript(Array.from(e.results).map(r => r[0].transcript).join(" "));
+    rec.onend = () => setPhase(prev => prev === "listening" ? "preview" : prev);
+    recRef.current = rec;
+  }, []);
+
+  const startListening = (cat) => { setTranscript(""); setCategory(cat); recRef.current?.start(); setPhase("listening"); };
+  const stopListening = () => { recRef.current?.stop(); setPhase("preview"); };
+  const reset = () => { recRef.current?.stop(); setPhase("idle"); setCategory(null); setTranscript(""); };
+  const handleSave = () => {
+    if (!transcript.trim()) return;
+    onAdd({ text: transcript.trim(), category: category||"client", client:"", tags:[], date: new Date().toISOString(), id: Date.now().toString() });
+    setPhase("saved");
+    setTimeout(() => { setPhase("idle"); setCategory(null); setTranscript(""); }, 2500);
+  };
+
+  const catColor = category ? getCat(category).color : "#1D3557";
+
+  return (
+    <div className="drive-wrap">
+      {phase === "saved" && (
+        <div style={{ textAlign:"center", animation:"fadeIn 0.3s ease" }}>
+          <div style={{ fontSize:"4rem" }}>✅</div>
+          <div style={{ fontSize:"1.3rem", fontWeight:700, color:"#2D6A4F", marginTop:12, fontFamily:"sans-serif" }}>Enregistré !</div>
+        </div>
+      )}
+
+      {phase === "idle" && (
+        <div style={{ width:"100%", maxWidth:360, animation:"fadeIn 0.3s ease" }}>
+          <div style={{ textAlign:"center", marginBottom:28 }}>
+            <div style={{ fontSize:"2.5rem" }}>🚗</div>
+            <div style={{ fontSize:"1.1rem", fontWeight:700, color:"#1D3557", marginTop:8, fontFamily:"sans-serif" }}>Mode conduite</div>
+            <div style={{ fontSize:"0.85rem", color:"#888", marginTop:4, fontFamily:"sans-serif" }}>Choisis la catégorie puis dicte</div>
+          </div>
+          <div className="drive-cat-btns">
+            {CATEGORIES.map(cat => (
+              <button key={cat.id} className="drive-cat-btn"
+                style={{ border:`3px solid ${cat.color}`, background:cat.bg, color:cat.color }}
+                onClick={() => startListening(cat.id)}>
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {phase === "listening" && (
+        <div style={{ textAlign:"center", animation:"fadeIn 0.3s ease" }}>
+          <div className="drive-mic-wrap">
+            {[1,2,3].map(i => (
+              <div key={i} className="ripple" style={{
+                border:`3px solid ${catColor}`,
+                animation:`ripple 1.8s ease-out ${i*0.4}s infinite`,
+              }} />
+            ))}
+            <button className="drive-stop-btn" style={{ background:catColor }} onClick={stopListening}>⏹</button>
+          </div>
+          <div style={{ marginTop:24, fontSize:"1rem", fontWeight:700, color:catColor, fontFamily:"sans-serif" }}>
+            {getCat(category).label}
+          </div>
+          <div style={{ fontSize:"0.85rem", color:"#888", marginTop:6, fontFamily:"sans-serif" }}>
+            Parle… appuie ⏹ pour terminer
+          </div>
+          {transcript && <div className="drive-transcript">{transcript}</div>}
+          <button className="btn-drive-cancel" onClick={reset}>Annuler</button>
+        </div>
+      )}
+
+      {phase === "preview" && (
+        <div style={{ width:"100%", maxWidth:360, animation:"fadeIn 0.3s ease" }}>
+          <div style={{ textAlign:"center", marginBottom:16 }}><Badge catId={category} /></div>
+          <div className="drive-preview-text">
+            {transcript || <span style={{ color:"#bbb" }}>Rien enregistré…</span>}
+          </div>
+          <div className="drive-actions">
+            <button className="btn-drive-save" onClick={handleSave}>✅ Enregistrer</button>
+            <button className="btn-drive-redo" onClick={() => startListening(category)}>🎙️ Recommencer</button>
+            <button className="btn-drive-cancel" onClick={reset}>Annuler</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Main App ---
+function App() {
+  const [entries, setEntries] = useState(() => loadEntries());
+  const [tab, setTab] = useState("journal");
+  const [filterCat, setFilterCat] = useState("all");
+  const [search, setSearch] = useState("");
+
+  const handleAdd = (entry) => {
+    const next = [entry, ...entries];
+    setEntries(next); saveEntries(next);
+  };
+  const handleDelete = (id) => {
+    const next = entries.filter(e => e.id !== id);
+    setEntries(next); saveEntries(next);
+  };
+
+  const filtered = useMemo(() => entries
+    .filter(e => filterCat === "all" || e.category === filterCat)
+    .filter(e => {
+      if (!search) return true;
+      const s = search.toLowerCase();
+      return e.text.toLowerCase().includes(s) || (e.client||"").toLowerCase().includes(s) || (e.tags||[]).some(t => t.includes(s));
+    }), [entries, filterCat, search]);
+
+  const grouped = useMemo(() => {
+    const groups = {};
+    filtered.forEach(e => { const d = e.date.slice(0,10); if (!groups[d]) groups[d]=[]; groups[d].push(e); });
+    return Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0]));
+  }, [filtered]);
+
+  return (
+    <div id="root">
+      <div className="header">
+        <div className="header-inner">
+          <div className="header-top">
+            <div>
+              <div className="header-label">Guillaume · Ficelle Conseil</div>
+              <div className="header-title">Journal professionnel</div>
+            </div>
+            <div className="header-count">
+              <div className="header-count-num">{entries.length}</div>
+              entrée{entries.length !== 1 ? "s" : ""}
+            </div>
+          </div>
+          <div className="tabs">
+            {[["journal","📋 Journal"],["dashboard","📊 Stats"],["drive","🚗 Conduite"]].map(([id,label]) => (
+              <button key={id} className={`tab-btn ${tab===id?"active":"inactive"}`} onClick={() => setTab(id)}>{label}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="content">
+        {tab === "dashboard" && <Dashboard entries={entries} />}
+
+        {tab === "drive" && <DriveMode onAdd={handleAdd} />}
+
+        {tab === "journal" && (
+          <>
+            <AddForm onAdd={handleAdd} />
+
+            <div className="filter-row">
+              <button className="filter-btn" onClick={() => setFilterCat("all")}
+                style={{ border:"2px solid #1D3557", background:filterCat==="all"?"#1D3557":"transparent", color:filterCat==="all"?"#fff":"#1D3557" }}>
+                Tout
+              </button>
+              {CATEGORIES.map(cat => (
+                <button key={cat.id} className="filter-btn" onClick={() => setFilterCat(cat.id)}
+                  style={{ border:`2px solid ${cat.color}`, background:filterCat===cat.id?cat.color:"transparent", color:filterCat===cat.id?"#fff":cat.color }}>
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <input className="search-input" placeholder="🔍 Rechercher..."
+              value={search} onChange={e => setSearch(e.target.value)} />
+
+            {grouped.length === 0 ? (
+              <div className="empty-state">
+                {entries.length === 0 ? "Aucune entrée pour l'instant. Ajoute ta première note !" : "Aucun résultat."}
+              </div>
+            ) : grouped.map(([day, dayEntries]) => (
+              <div key={day} style={{ marginBottom:20 }}>
+                <div className="day-header">{formatDate(day)}</div>
+                {dayEntries.map(e => <EntryCard key={e.id} entry={e} onDelete={handleDelete} />)}
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
